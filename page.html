@@ -1,0 +1,393 @@
+
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#0a0614;--void:#060310;--star:#e8e0ff;--mist:#b8aee0;--violet:#7c5cbf;--deep-violet:#3d1f8a;--gold:#c9a84c;--aurora:#9b72cf;--dim:#4a3a7a;
+  }
+  #tww{
+    background:var(--void);min-height:600px;font-family:'Crimson Pro',serif;color:var(--star);position:relative;overflow:hidden;border-radius:12px;
+  }
+  canvas#starfield{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  canvas#cursor-trail{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:50}
+  .screen{position:relative;z-index:10;display:none;padding:2.5rem 2rem;min-height:600px;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+  .screen.active{display:flex}
+  .eyebrow{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.35em;color:var(--dim);text-transform:uppercase;margin-bottom:1.2rem}
+  .portal-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.8rem,8vw,4.5rem);font-weight:300;line-height:1.1;color:var(--star);margin-bottom:.8rem}
+  .portal-title em{font-style:italic;color:var(--aurora)}
+  .tagline{font-size:1.05rem;color:var(--mist);font-weight:300;line-height:1.7;max-width:460px;margin:0 auto 2.5rem}
+  .btn-primary{
+    background:transparent;border:1px solid var(--violet);color:var(--star);padding:.8rem 2.2rem;font-family:'Cormorant Garamond',serif;font-size:1rem;letter-spacing:.12em;cursor:pointer;border-radius:2px;transition:all .4s;position:relative;overflow:hidden
+  }
+  .btn-primary:hover{background:rgba(124,92,191,.18);border-color:var(--aurora);color:#fff}
+  .btn-ghost{background:transparent;border:none;color:var(--dim);font-family:'Crimson Pro',serif;font-size:.9rem;cursor:pointer;letter-spacing:.08em;margin-top:1rem;transition:color .3s;display:block;margin-left:auto;margin-right:auto}
+  .btn-ghost:hover{color:var(--mist)}
+  .divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,var(--dim),transparent);margin:1.8rem auto}
+  .q-counter{font-family:'Cormorant Garamond',serif;font-size:.75rem;letter-spacing:.25em;color:var(--dim);margin-bottom:2rem}
+  .question-text{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,4vw,2.1rem);font-weight:300;font-style:italic;color:var(--star);line-height:1.5;max-width:520px;margin:0 auto 2.5rem}
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;width:100%;margin:0 auto}
+  .opt{
+    background:rgba(255,255,255,.03);border:1px solid rgba(124,92,191,.25);color:var(--mist);padding:.9rem 1rem;font-family:'Crimson Pro',serif;font-size:.95rem;cursor:pointer;border-radius:4px;transition:all .35s;line-height:1.4;text-align:left
+  }
+  .opt:hover,.opt.selected{background:rgba(124,92,191,.18);border-color:var(--aurora);color:var(--star)}
+  .opt.selected{border-color:var(--gold);color:var(--gold)}
+  .progress-bar{width:200px;height:1px;background:rgba(255,255,255,.08);margin:0 auto 2.5rem;position:relative}
+  .progress-fill{height:1px;background:linear-gradient(90deg,var(--deep-violet),var(--violet),var(--aurora));transition:width .6s ease}
+  .loading-screen{flex-direction:column;gap:.5rem}
+  .loading-orb{width:80px;height:80px;border-radius:50%;border:1px solid rgba(124,92,191,.3);margin:0 auto 2rem;position:relative;animation:orbpulse 2.5s ease-in-out infinite}
+  .loading-orb::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(155,114,207,.4);animation:orbpulse 2.5s ease-in-out infinite .4s}
+  .loading-orb::after{content:'';position:absolute;inset:18px;border-radius:50%;background:rgba(124,92,191,.2);animation:orbpulse 2.5s ease-in-out infinite .8s}
+  @keyframes orbpulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+  .loading-text{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--mist);font-size:1rem;animation:fadecycle 2s ease-in-out infinite}
+  @keyframes fadecycle{0%,100%{opacity:.4}50%{opacity:1}}
+  .result-realm{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,6vw,3.2rem);font-weight:300;font-style:italic;color:var(--gold);line-height:1.2;margin-bottom:.4rem}
+  .result-archetype{font-size:.8rem;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;margin-bottom:2rem}
+  .universe-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;width:100%;margin:0 auto 2rem;text-align:left}
+  .u-card{background:rgba(255,255,255,.025);border:1px solid rgba(124,92,191,.2);border-radius:6px;padding:.85rem 1rem}
+  .u-label{font-size:.65rem;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;margin-bottom:.3rem}
+  .u-value{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--star);font-style:italic}
+  .story-block{background:rgba(0,0,0,.3);border-left:2px solid var(--violet);padding:1.2rem 1.4rem;max-width:540px;margin:0 auto 2rem;text-align:left;border-radius:0 4px 4px 0}
+  .story-block p{font-size:.95rem;color:var(--mist);line-height:1.85;font-style:italic}
+  .story-block p+p{margin-top:.8rem}
+  .constellation{position:absolute;opacity:.06;pointer-events:none}
+  @keyframes twinkle{0%,100%{opacity:.06}50%{opacity:.14}}
+  .constellation{animation:twinkle 4s ease-in-out infinite}
+  .fade-in{animation:fadein .8s ease forwards}
+  @keyframes fadein{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  #genre-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:480px;margin:0 auto 1.5rem}
+  .genre-pill{background:transparent;border:1px solid rgba(124,92,191,.3);color:var(--mist);padding:.45rem 1.1rem;font-family:'Crimson Pro',serif;font-size:.85rem;border-radius:20px;cursor:pointer;transition:all .3s}
+  .genre-pill.sel{background:rgba(124,92,191,.22);border-color:var(--gold);color:var(--gold)}
+  #name-input{background:transparent;border:none;border-bottom:1px solid var(--dim);color:var(--star);font-family:'Cormorant Garamond',serif;font-size:1.3rem;text-align:center;width:260px;padding:.4rem .2rem;outline:none;caret-color:var(--aurora);transition:border-color .3s}
+  #name-input::placeholder{color:var(--dim)}
+  #name-input:focus{border-color:var(--aurora)}
+  .inner-world-desc{font-size:1rem;color:var(--mist);line-height:1.9;max-width:500px;margin:0 auto 1.5rem;font-style:italic}
+</style>
+
+<div id="tww">
+  <canvas id="starfield"></canvas>
+  <canvas id="cursor-trail"></canvas>
+
+  <svg class="constellation" style="top:5%;left:2%;width:120px;height:100px" viewBox="0 0 120 100">
+    <circle cx="20" cy="20" r="1.5" fill="#c9a84c"/><circle cx="60" cy="10" r="1" fill="#c9a84c"/><circle cx="100" cy="30" r="2" fill="#c9a84c"/><circle cx="80" cy="70" r="1.5" fill="#c9a84c"/><circle cx="40" cy="80" r="1" fill="#c9a84c"/>
+    <line x1="20" y1="20" x2="60" y2="10" stroke="#c9a84c" stroke-width=".5"/><line x1="60" y1="10" x2="100" y2="30" stroke="#c9a84c" stroke-width=".5"/><line x1="100" y1="30" x2="80" y2="70" stroke="#c9a84c" stroke-width=".5"/><line x1="80" y1="70" x2="40" y2="80" stroke="#c9a84c" stroke-width=".5"/>
+  </svg>
+  <svg class="constellation" style="bottom:8%;right:3%;width:100px;height:90px;animation-delay:2s" viewBox="0 0 100 90">
+    <circle cx="50" cy="10" r="2" fill="#c9a84c"/><circle cx="10" cy="50" r="1.5" fill="#c9a84c"/><circle cx="90" cy="45" r="1" fill="#c9a84c"/><circle cx="30" cy="80" r="1.5" fill="#c9a84c"/><circle cx="70" cy="75" r="1" fill="#c9a84c"/>
+    <line x1="50" y1="10" x2="10" y2="50" stroke="#c9a84c" stroke-width=".5"/><line x1="50" y1="10" x2="90" y2="45" stroke="#c9a84c" stroke-width=".5"/><line x1="10" y1="50" x2="30" y2="80" stroke="#c9a84c" stroke-width=".5"/><line x1="90" y1="45" x2="70" y2="75" stroke="#c9a84c" stroke-width=".5"/>
+  </svg>
+
+  <!-- Screen 0: Portal Entry -->
+  <div class="screen active" id="s0">
+    <div class="eyebrow">a discovery for those who dare to look within</div>
+    <div class="portal-title">The World<br><em>Within</em></div>
+    <div class="tagline">Somewhere inside you, a universe has always existed — unmapped, unnamed, entirely your own. Tonight, we find it.</div>
+    <button class="btn-primary" onclick="goScreen('s-name')">Enter the portal</button>
+    <div class="divider"></div>
+    <div style="font-size:.75rem;color:var(--dim);letter-spacing:.15em">∗ ∗ ∗</div>
+  </div>
+
+  <!-- Screen: Name -->
+  <div class="screen" id="s-name">
+    <div class="eyebrow">before we begin</div>
+    <div class="question-text" style="font-size:1.5rem;margin-bottom:1.5rem">What do they call you<br>in this world?</div>
+    <input id="name-input" type="text" placeholder="your name..." maxlength="40"/>
+    <div style="height:1.8rem"></div>
+    <button class="btn-primary" onclick="confirmName()">This is my name</button>
+  </div>
+
+  <!-- Screen: Genre -->
+  <div class="screen" id="s-genre">
+    <div class="eyebrow">your story awaits</div>
+    <div class="question-text" style="font-size:1.5rem;margin-bottom:1.5rem">What kind of world lives<br>in your dreams?</div>
+    <div id="genre-row">
+      <span class="genre-pill" onclick="toggleGenre(this)">Dark fantasy</span>
+      <span class="genre-pill" onclick="toggleGenre(this)">Celestial myth</span>
+      <span class="genre-pill" onclick="toggleGenre(this)">Dreamcore</span>
+      <span class="genre-pill" onclick="toggleGenre(this)">Ocean depths</span>
+      <span class="genre-pill" onclick="toggleGenre(this)">Ancient magic</span>
+      <span class="genre-pill" onclick="toggleGenre(this)">Cosmic wonder</span>
+    </div>
+    <button class="btn-primary" onclick="goToQuestions()" style="margin-top:.5rem">Into the unknown</button>
+  </div>
+
+  <!-- Screen: Questions -->
+  <div class="screen" id="s-q">
+    <div class="q-counter" id="q-counter">question 1 of 7</div>
+    <div class="progress-bar"><div class="progress-fill" id="prog" style="width:14%"></div></div>
+    <div class="question-text" id="q-text"></div>
+    <div class="options-grid" id="q-opts"></div>
+  </div>
+
+  <!-- Screen: Loading -->
+  <div class="screen loading-screen" id="s-load">
+    <div class="loading-orb"></div>
+    <div class="eyebrow">mapping your universe</div>
+    <div class="loading-text" id="load-msg">Reading the light between your answers...</div>
+  </div>
+
+  <!-- Screen: Result -->
+  <div class="screen" id="s-result" style="padding:2rem 1.5rem">
+    <div class="eyebrow">your inner universe</div>
+    <div class="result-realm" id="r-realm">The Violet Observatory</div>
+    <div class="result-archetype" id="r-arch">The Dreaming Cartographer</div>
+    <div class="divider"></div>
+    <div class="universe-grid" id="u-grid"></div>
+    <div class="inner-world-desc" id="r-desc"></div>
+    <button class="btn-primary" onclick="goStory()" style="margin-bottom:.6rem">Read my story ✦</button>
+    <button class="btn-ghost" onclick="restart()">Begin again</button>
+  </div>
+
+  <!-- Screen: Story -->
+  <div class="screen" id="s-story" style="padding:2rem 1.5rem">
+    <div class="eyebrow" id="story-eyebrow">a tale written in starlight</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;color:var(--gold);margin-bottom:1.5rem" id="story-title"></div>
+    <div class="story-block"><div id="story-text" style="font-size:.95rem;color:var(--mist);line-height:1.9"></div></div>
+    <button class="btn-ghost" onclick="goScreen('s-result')">← Back to my universe</button>
+    <button class="btn-ghost" onclick="restart()">Discover again</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS=[
+  {q:"If you found a hidden doorway tonight, where would it lead?",opts:["A forest that glows from within","A library older than language","An ocean with no bottom","A city built on clouds"]},
+  {q:"What kind of sky follows you home?",opts:["Violet dusk with two moons","A sky full of moving constellations","A storm that smells of petrichor","Endless golden hour, frozen still"]},
+  {q:"Which of these sounds like a memory from a dream?",opts:["Pages turning in a silent tower","Water in underground caverns","Wind through crystal trees","Bells from a sunken cathedral"]},
+  {q:"What would you carry into an unknown world?",opts:["A lantern that never dims","A book that writes itself","A compass that points to longing","A key with no matching lock"]},
+  {q:"Which forgotten place feels somehow familiar?",opts:["An observatory on a cliff","A greenhouse full of moon-flowers","A village frozen in autumn","A bridge over nothing at all"]},
+  {q:"What creature might watch over you?",opts:["A silver moth the size of a hawk","A fox made of smoke","A serpent that lives in star charts","An owl that speaks in questions"]},
+  {q:"If your inner world had a colour, it would be:",opts:["Deep indigo, like the space between stars","Amber, like ancient candlelight","Silver-green, like bioluminescence","Rose-violet, like dawn over a strange sea"]}
+];
+
+let answers=[],userName='',selectedGenre='',currentQ=0;
+const trail=[];
+
+function goScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  el.classList.add('active');
+  el.classList.add('fade-in');
+  setTimeout(()=>el.classList.remove('fade-in'),900);
+}
+
+function confirmName(){
+  const v=document.getElementById('name-input').value.trim();
+  userName=v||'Wanderer';
+  goScreen('s-genre');
+}
+
+function toggleGenre(el){
+  document.querySelectorAll('.genre-pill').forEach(p=>p.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedGenre=el.textContent;
+}
+
+function goToQuestions(){
+  answers=[];currentQ=0;
+  renderQ();
+  goScreen('s-q');
+}
+
+function renderQ(){
+  const q=QUESTIONS[currentQ];
+  document.getElementById('q-counter').textContent=`question ${currentQ+1} of ${QUESTIONS.length}`;
+  document.getElementById('prog').style.width=`${Math.round(((currentQ)/QUESTIONS.length)*100)}%`;
+  document.getElementById('q-text').textContent=q.q;
+  const og=document.getElementById('q-opts');
+  og.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.textContent=o;
+    b.onclick=()=>pickOpt(o,b);
+    og.appendChild(b);
+  });
+}
+
+function pickOpt(val,btn){
+  document.querySelectorAll('.opt').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  answers[currentQ]=val;
+  setTimeout(()=>{
+    currentQ++;
+    if(currentQ<QUESTIONS.length){renderQ();}
+    else{startGeneration();}
+  },500);
+}
+
+const loadingMsgs=[
+  "Reading the light between your answers...",
+  "Naming constellations that belong only to you...",
+  "Charting the sky of your inner world...",
+  "The realm is taking shape...",
+  "Writing your story in starlight..."
+];
+
+function startGeneration(){
+  goScreen('s-load');
+  let mi=0;
+  const interval=setInterval(()=>{
+    mi=(mi+1)%loadingMsgs.length;
+    document.getElementById('load-msg').textContent=loadingMsgs[mi];
+  },2000);
+  generateUniverse().then(()=>clearInterval(interval));
+}
+
+async function generateUniverse(){
+  const answerSummary=QUESTIONS.map((q,i)=>`Q: ${q.q}\nA: ${answers[i]||'(skipped)'}`).join('\n\n');
+  const prompt=`You are a poetic creator of inner universes. Based on this person's answers to dreamlike questions, generate their personal inner universe profile AND a short evocative story. Their name is "${userName}". Their preferred genre is "${selectedGenre||'celestial fantasy'}".
+
+Their answers:
+${answerSummary}
+
+Respond ONLY with a JSON object (no markdown, no backticks) with exactly these fields:
+{
+  "realm": "A 3-5 word poetic realm name",
+  "archetype": "A 3-5 word archetype title",
+  "sky": "poetic sky description (8-12 words)",
+  "creature": "their symbolic creature (5-8 words)",
+  "flower": "their dream flower name + feeling (6-10 words)",
+  "color": "their color constellation (6-10 words)",
+  "artifact": "their mythical artifact (5-8 words)",
+  "landscape": "their sacred landscape (6-10 words)",
+  "description": "2 poetic sentences describing their inner world (30-45 words total)",
+  "story_title": "A poetic 4-7 word story title",
+  "story": "A 200-250 word immersive second-person story placing them inside their inner universe, written in present tense, poetic and atmospheric, specific to their answers. Two paragraphs separated by \\n\\n."
+}`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content.map(c=>c.text||'').join('');
+    const clean=text.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(clean);
+    renderResult(parsed);
+  }catch(e){
+    renderFallback();
+  }
+}
+
+function renderResult(d){
+  document.getElementById('r-realm').textContent=d.realm||'The Violet Observatory';
+  document.getElementById('r-arch').textContent=d.archetype||'The Dreaming Cartographer';
+  document.getElementById('r-desc').textContent=d.description||'';
+  const grid=document.getElementById('u-grid');
+  const items=[
+    {label:'Signature sky',val:d.sky},
+    {label:'Sacred creature',val:d.creature},
+    {label:'Dream flower',val:d.flower},
+    {label:'Color constellation',val:d.color},
+    {label:'Mythical artifact',val:d.artifact},
+    {label:'Sacred landscape',val:d.landscape}
+  ];
+  grid.innerHTML=items.map(i=>`<div class="u-card"><div class="u-label">${i.label}</div><div class="u-value">${i.val||'—'}</div></div>`).join('');
+  window._storyData=d;
+  goScreen('s-result');
+}
+
+function goStory(){
+  const d=window._storyData||{};
+  document.getElementById('story-eyebrow').textContent=`a tale for ${userName}`;
+  document.getElementById('story-title').textContent=d.story_title||'The World Within';
+  const stEl=document.getElementById('story-text');
+  const paragraphs=(d.story||'Your story is still being written in the stars.').split(/\n\n/);
+  stEl.innerHTML=paragraphs.map(p=>`<p>${p}</p>`).join('');
+  goScreen('s-story');
+}
+
+function renderFallback(){
+  renderResult({
+    realm:'The Indigo Expanse',archetype:'The Luminous Wanderer',
+    sky:'A violet sky threaded with slow-moving stars',
+    creature:'A silver moth that leaves maps on its wings',
+    flower:'Moon-jasmine, blooming only at forgotten hours',
+    color:'Deep indigo shading into gold at the horizon',
+    artifact:'A compass that points toward what you most need',
+    landscape:'Glass plains reflecting an impossible sky',
+    description:'Your inner world breathes with quiet wonder — a place of impossible beauty that shifts like a half-remembered dream. Every door you open leads somewhere new, and every arrival feels like a homecoming.',
+    story_title:'The Glass Plains at the Edge of Memory',
+    story:'You find yourself standing at the boundary of a vast glass plain. Beneath your feet, constellations drift like slow fish.\n\nThe silver moth appears, circling your lantern. You follow it toward a tower of light on the horizon, knowing — without knowing how you know — that your story began here long ago.'
+  });
+}
+
+function restart(){
+  answers=[];userName='';selectedGenre='';currentQ=0;
+  document.getElementById('name-input').value='';
+  document.querySelectorAll('.genre-pill').forEach(p=>p.classList.remove('sel'));
+  goScreen('s0');
+}
+
+// Starfield
+(function(){
+  const c=document.getElementById('starfield');
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.offsetWidth;c.height=c.offsetHeight;}
+  resize();
+  const stars=Array.from({length:160},()=>({
+    x:Math.random(),y:Math.random(),
+    r:Math.random()*1.2+.2,
+    speed:Math.random()*.00008+.00002,
+    phase:Math.random()*Math.PI*2,
+    drift:Math.random()*.00003-.000015
+  }));
+  let t=0;
+  function draw(){
+    requestAnimationFrame(draw);
+    t++;
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      s.x+=s.drift;
+      if(s.x<0)s.x=1;if(s.x>1)s.x=0;
+      const op=.3+.4*Math.sin(s.phase+t*s.speed*60);
+      ctx.beginPath();
+      ctx.arc(s.x*c.width,s.y*c.height,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(232,224,255,${op})`;
+      ctx.fill();
+    });
+  }
+  draw();
+  window.addEventListener('resize',resize);
+})();
+
+// Cursor trail
+(function(){
+  const c=document.getElementById('cursor-trail');
+  const ctx=c.getContext('2d');
+  function resize(){c.width=c.offsetWidth;c.height=c.offsetHeight;}
+  resize();
+  const pts=[];
+  const container=document.getElementById('tww');
+  container.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect();
+    pts.push({x:e.clientX-r.left,y:e.clientY-r.top,life:1,r:Math.random()*2+1});
+    if(pts.length>60)pts.shift();
+  });
+  function draw(){
+    requestAnimationFrame(draw);
+    ctx.clearRect(0,0,c.width,c.height);
+    pts.forEach((p,i)=>{
+      p.life-=.025;
+      if(p.life<=0)return;
+      const hue=260+Math.sin(i*.1)*30;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${hue},70%,75%,${p.life*.6})`;
+      ctx.fill();
+    });
+  }
+  draw();
+  window.addEventListener('resize',resize);
+})();
+
+document.getElementById('name-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter')confirmName();
+});
+</script>
